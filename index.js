@@ -1,37 +1,28 @@
-const http = require("http");
+const express = require("express");
 const path = require("path");
-const fs = require("fs/promises");
+const logger = require("morgan");
 
-const hostname = "127.0.0.1";
 const port = 8080;
+const app = express();
 
-function serverListenAction(server) {
-  server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
-  });
-}
+app.use(logger("dev"));
 
-function openRequestedHtmlServer() {
-  let getPath = (filename) => {
-    if (filename === "/") return path.resolve(__dirname, `./index.html`);
-    return path.resolve(__dirname, `./routes/${filename}.html`);
-  };
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname + "/routes/index.html"));
+});
 
-  const server = http.createServer(async (req, res) => {
-    let url = new URL(req.url, `http://${req.headers.host}`);
-    try {
-      const data = await fs.readFile(getPath(url.pathname));
-      res.writeHead(200, { "Content-Type": "text/html" });
-      res.write(data);
-      return res.end();
-    } catch (err) {
-      const errorPage = await fs.readFile(getPath("404"));
-      res.writeHead(404, { "Content-Type": "text/html" });
-      return res.end(errorPage);
-    }
-  });
+app.get("/about", (req, res) => {
+  res.sendFile(path.join(__dirname + "/routes/about.html"));
+});
 
-  serverListenAction(server);
-}
+app.get("/contact-me", (req, res) => {
+  res.sendFile(path.join(__dirname + "/routes/contact-me.html"));
+});
 
-openRequestedHtmlServer();
+app.use(function (req, res, next) {
+  res.sendFile(path.join(__dirname + "/routes/404.html"));
+});
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}!`);
+});
